@@ -1,15 +1,35 @@
-
 <!DOCTYPE html>
 <html>
 <head>
   <title>Mess App</title>
+  <style>
+    body { font-family: Arial; text-align: center; background:#f2f2f2; }
+    input, select, button { padding:10px; margin:5px; width:80%; }
+    .card {
+      background:white;
+      margin:10px;
+      padding:15px;
+      border-radius:10px;
+      box-shadow:0 2px 5px rgba(0,0,0,0.2);
+    }
+  </style>
 </head>
 <body>
 
-<h2>Mess App</h2>
+<h2>🍽️ Mess App</h2>
+
+<!-- FILTER -->
+<select id="filter" onchange="loadData()">
+  <option value="">All District</option>
+</select>
+
+<h3>Add Mess</h3>
 
 <input id="name" placeholder="Mess Name"><br>
 <input id="district" placeholder="District"><br>
+<input id="breakfast" placeholder="Breakfast"><br>
+<input id="lunch" placeholder="Lunch"><br>
+<input id="dinner" placeholder="Dinner"><br>
 <input id="price" placeholder="Price"><br>
 
 <button onclick="addMess()">Save</button>
@@ -32,9 +52,12 @@ const db = firebase.firestore();
 
 function addMess() {
   db.collection("mess").add({
-    name: document.getElementById("name").value,
-    district: document.getElementById("district").value,
-    price: document.getElementById("price").value
+    name: name.value,
+    district: district.value,
+    breakfast: breakfast.value,
+    lunch: lunch.value,
+    dinner: dinner.value,
+    price: price.value
   }).then(() => {
     alert("Saved ✅");
     loadData();
@@ -42,13 +65,35 @@ function addMess() {
 }
 
 function loadData() {
+  let filter = document.getElementById("filter").value;
+  let html = "";
+  let districts = new Set();
+
   db.collection("mess").get().then(snapshot => {
-    let html = "";
     snapshot.forEach(doc => {
       let d = doc.data();
-      html += `<p>${d.name} - ${d.district} - ₹${d.price}</p>`;
+      districts.add(d.district);
+
+      if(filter === "" || d.district === filter) {
+        html += `
+        <div class="card">
+          <h3>${d.name}</h3>
+          <p>📍 ${d.district}</p>
+          <p>🍳 ${d.breakfast}</p>
+          <p>🍛 ${d.lunch}</p>
+          <p>🌙 ${d.dinner}</p>
+          <p><b>₹${d.price}</b></p>
+        </div>`;
+      }
     });
+
     document.getElementById("list").innerHTML = html;
+
+    let filterBox = document.getElementById("filter");
+    filterBox.innerHTML = `<option value="">All District</option>`;
+    districts.forEach(d => {
+      filterBox.innerHTML += `<option value="${d}">${d}</option>`;
+    });
   });
 }
 
